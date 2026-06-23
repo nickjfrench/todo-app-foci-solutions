@@ -54,11 +54,13 @@ I spent the first 2 hours reviewing the scope, researching best practices for mo
 
 ## Design
 
-Simple TODO app with the following CRUD.
+Well architected TODO app with basic CRUD functionality. Running on Fastify with a SQLite persistence layer.
 
 ### Model
 
 Zod first approach to standardize the types across the stack. 
+
+Due to the low risk nature of this app and the lack of any PII. There will be no DTO layer isolating business models from boundary types.
 
 Model Name: todos
 
