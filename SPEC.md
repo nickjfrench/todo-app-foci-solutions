@@ -73,14 +73,13 @@ Fields:
 
 ### Routes
 
-POST /todos - create new to-do - returns full body of created todo
-GET /todos - get all to-do - include all fields
-GET /todos?isCompleted=false&orderBy=dueDate&orderDir=asc&etc - query param support for list filtering
-GET /todos?page=1&limit=10 - pagination for list filtering
-
-GET /todos/{todos.id} - get one to-do
-PATCH /todos/{todos.id} - update one to-do, overwriting only fields specified - completed/incompleted via this route, saves on writing extra code.
-DELETE /todos/{todos.id} - delete on to-do
+- POST /todos - create new to-do - returns full body of created todo
+- GET /todos - get all to-do - include all fields
+- GET /todos?completed=false&orderBy=dueDate&orderDir=asc - query param support for list filtering
+- GET /todos?page=1&limit=10 - pagination for list filtering - simple pagination chosen over cursor pagination just to simplify things
+- GET /todos/{todos.id} - get one to-do
+- PATCH /todos/{todos.id} - update one to-do, overwriting only fields specified - completed/incompleted via this route, saves on writing extra code.
+- DELETE /todos/{todos.id} - delete on to-do
 
 ### Docker
 
