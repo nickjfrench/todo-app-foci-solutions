@@ -9,7 +9,7 @@
   "scripts": {
     "test": "npm run build:ts && vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "npm run build:ts && vitest run --coverage",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "build:ts": "tsc"
@@ -22,7 +22,7 @@
     "@fastify/sensible": "^6.0.0",
     "fastify": "^5.0.0",
     "fastify-plugin": "^5.0.0",
-    "fastify-type-provider-zod": "^4.0.0",
+    "@fastify/type-provider-zod": "^1.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
