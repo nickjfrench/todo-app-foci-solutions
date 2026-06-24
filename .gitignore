@@ -1,0 +1,8 @@
+# Avoid leaking their requirements.
+REQUIREMENTS.md
+
+node_modules/
+
+.env
+
+.DS_Store
