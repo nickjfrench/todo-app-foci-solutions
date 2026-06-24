@@ -7,9 +7,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "npm run build:ts && vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "npm run build:ts && vitest run --coverage",
+    "test": "NODE_OPTIONS='--import tsx' vitest run",
+    "test:watch": "NODE_OPTIONS='--import tsx' vitest",
+    "test:coverage": "NODE_OPTIONS='--import tsx' vitest run --coverage",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "build:ts": "tsc"
