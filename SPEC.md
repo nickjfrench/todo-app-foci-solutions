@@ -20,7 +20,7 @@ I spent the first 2 hours reviewing the scope, researching best practices for mo
     - NestJS: Better for enterprise apps, but too overkill for the scope and timeframe of this project.
 - DDD-lite Architecture with Fastify's plugin system — clear separation between infrastructure wiring and business logic.
   - `src/plugins/` — thin wiring layer only. Each plugin imports a service from a module and decorates it onto the Fastify instance. Uses `fastify-plugin` with `dependencies` to declare ordering (e.g. `todos.plugin.ts` depends on `db.ts`). Zero business logic here.
-  - `src/modules/{feature}/` — all business logic lives here. Each module owns its service, routes, repository interface, and repository implementations. E.g. `src/modules/todos/` contains `todos.service.ts`, `todos.routes.ts`, `todos.repository.ts`, `todos.sqlite.repository.ts`, and `index.ts`.
+  - `src/routes/{feature}/` — all business logic lives here. Each module owns its service, routes, repository interface, and repository implementations. E.g. `src/routes/todos/` contains `todos.service.ts`, `todos.routes.ts`, `todos.repository.ts`, `todos.sqlite.repository.ts`, and `index.ts`.
   - Each module's `index.ts` is a Fastify plugin that registers its routes and pulls its service from the Fastify instance (decorated by the plugin layer). `@fastify/autoload` loads only `index.ts` files via `ignorePattern`.
   - Repository pattern with explicit interfaces (ports) and pluggable implementations (adapters) — swap SQLite for any DB later without touching business logic.
   - Fastify's `dependencies` option on `fastify-plugin` provides a lightweight DAG for plugin ordering — no manual DI container needed.
@@ -48,10 +48,20 @@ I spent the first 2 hours reviewing the scope, researching best practices for mo
   - If scope expands in future, it would be very easy to add the first migration and mock it's completed state in migration meta (like SequelizeMeta if Sequelize was used).
   - Instead setup DB schema in via a runSchemaUpdates function on app startup with CREATE IF NOT EXISTS
 
+### Error Handling
+
+- Fastify catches both synchronous throws and async rejects in route handlers automatically, routing them to its error handler.
+- Throw `fastify.httpErrors.<method>(message)` in service/handler code — these are `http-errors` instances that carry the correct status code and are serialized by Fastify's default error handler as `{ error, message, statusCode }`.
+- `reply.notFound()` / `reply.badRequest()` for inline responses. `throw fastify.httpErrors.notFound('message')` for service-layer throws.
+- `fastify.httpErrors` is decorated onto the instance by `@fastify/sensible` — access it through the Fastify instance, never import directly from the module.
+- Custom global `setErrorHandler` is NOT needed — Fastify's default + `@fastify/sensible` gives us the shape we want out of the box.
+- Zod validation errors (via `fastify-type-provider-zod`) return 400 automatically — no custom handling needed.
+- `parseId()` from `src/utils/id.ts` throws a plain `Error` — utilities stay framework-agnostic. Route handlers catch this and convert to `fastify.httpErrors.badRequest(...)` via the plugin-decorated `httpErrors` instance, returning a 400 to the client.
+
 ### RESTful Design
 
 - Return the JSON objects directly, don't wrap.
-- Errors to be returned via Fastify's pattern.
+- Errors to be returned via Fastify's default error handler pattern (`{ error, message, statusCode }`).
 - Input validation on all requests.
   - Use Zod for the request validation via `fastify-type-provider-zod`.
   - Zod provider handles response serialization automatically.
