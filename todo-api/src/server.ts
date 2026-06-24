@@ -12,7 +12,7 @@ server.setSerializerCompiler(serializerCompiler)
 server.register(app)
 
 server.listen({ 
-  port: Number(env.PORT) || 3000, 
+  port: env.PORT, 
   host: '0.0.0.0'
 }, (err, address) => {
   if (err) {

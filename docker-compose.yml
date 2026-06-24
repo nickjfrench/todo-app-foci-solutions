@@ -3,7 +3,7 @@ services:
     build:
       context: todo-api
     ports:
-      - "${PORT}:${PORT}"
+      - "${PORT:-3000}:${PORT:-3000}"
     env_file:
       - .env
     restart: unless-stopped
