@@ -1,37 +1,29 @@
 // This file contains code that we reuse between our tests.
 import * as path from 'node:path'
-import * as test from 'node:test'
-const helper = require('fastify-cli/helper.js')
-
-export type TestContext = {
-  after: typeof test.after
-}
-
-const AppPath = path.join(__dirname, '..', 'src', 'app.ts')
+import { afterEach } from 'vitest'
+import Fastify, { FastifyInstance } from 'fastify'
+import App from '../dist/app.js'
 
 // Fill in this config with all the configurations
 // needed for testing the application
 function config () {
   return {
-    skipOverride: true // Register our application with fastify-plugin
+    // any fastify server options go here
   }
 }
 
 // Automatically build and tear down our instance
-async function build (t: TestContext) {
-  // you can set all the options supported by the fastify CLI command
-  const argv = [AppPath]
+async function build (): Promise<FastifyInstance> {
+  const fastify = Fastify(config())
 
-  // fastify-plugin ensures that all decorators
-  // are exposed for testing purposes, this is
-  // different from the production setup
-  const app = await helper.build(argv, config())
+  // Register our application — fastify-plugin ensures all decorators
+  // are exposed for testing purposes
+  await fastify.register(App)
 
   // Tear down our app after we are done
-  // eslint-disable-next-line no-void
-  t.after(() => void app.close())
+  afterEach(() => fastify.close())
 
-  return app
+  return fastify
 }
 
 export {
