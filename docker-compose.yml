@@ -1,0 +1,9 @@
+services:
+  todo-api:
+    build:
+      context: todo-api
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - .env
+    restart: unless-stopped
