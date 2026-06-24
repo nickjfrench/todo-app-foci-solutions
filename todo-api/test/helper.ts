@@ -1,8 +1,7 @@
 // This file contains code that we reuse between our tests.
-import * as path from 'node:path'
 import { afterEach } from 'vitest'
 import Fastify, { FastifyInstance } from 'fastify'
-import App from '../dist/app.js'
+import App from '../src/app'
 
 // Fill in this config with all the configurations
 // needed for testing the application
