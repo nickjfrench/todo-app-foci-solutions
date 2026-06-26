@@ -14,6 +14,7 @@ type CreateTodoInput = z.infer<typeof CreateTodoInputSchema>
  */
 export class TodoService {
   constructor(private repo: ITodoRepository) {}
+
   async create(input: CreateTodoInput): Promise<Todo> {
     return this.repo.create(createTodo(input))
   }

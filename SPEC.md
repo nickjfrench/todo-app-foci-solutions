@@ -1,5 +1,7 @@
 # SPEC for Todo App
 
+**This is outdated, I left in git history to demonstrate my development process. See project README.md for up to date decisions and architecture.**
+
 I've chosen a RESTful HTTP server over SPA application for the following reasons:
 
 - SPA would force me to focus too much on visuals and persistence.
@@ -108,7 +110,7 @@ Fields:
 
 ## Plan
 
-1. Scaffolding and Project Setup
+1. Scaffolding and Project Setup - DONE
 - New TS project
 - Docker
 - Vitest
