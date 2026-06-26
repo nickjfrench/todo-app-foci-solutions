@@ -1,40 +1,54 @@
 # ====================
-# STAGE: Builder
+# STAGE: Base
 # ====================
-# Builder to install all dependencies including devDependencies
-# Image cleaned for prod at end of builder stage.
-FROM node:24-alpine AS builder
+# Shared foundation for all stages
+FROM node:24-alpine AS base
 
 WORKDIR /app
 
-# Copy package and package-lock
 COPY package*.json ./
 
-# Install using lock as source of truth
-# devDependencies included so things like TS can compile
+# ====================
+# STAGE: Builder
+# ====================
+# Installs all deps (including dev) and compiles TS
+FROM base AS builder
+
 RUN npm ci
 
-# Copy remaining source code
 COPY . .
 
-# Build and compile to JS
 RUN npm run build:ts
 
-# Remove devDependencies after build - keep image lean
+# Prune devDeps so we can copy clean node_modules into prod
 RUN npm prune --production
 
 # ====================
-# STAGE: Runner
+# STAGE: Development
 # ====================
-# Use built files
-FROM node:24-alpine AS runner
+FROM base AS development
+
+ENV NODE_ENV=development
+
+# Install all deps (including devDependencies) for hot reload etc.
+RUN npm ci
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
+
+# ====================
+# STAGE: Production
+# ====================
+FROM node:24-alpine AS production
 
 WORKDIR /app
 
-# Enforce production
 ENV NODE_ENV=production
 
-# Copy from builder stage
+# Copy only the built artifacts and pruned deps from builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
