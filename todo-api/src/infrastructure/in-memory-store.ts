@@ -19,6 +19,10 @@ export class InMemoryStore implements InMemoryStoreType {
     this.storage.get(namespace)?.delete(key)
   }
 
+  async clear(): Promise<void> {
+    this.storage.clear()
+  }
+
   async list<T>(namespace: string, options?: { orderBy?: string; orderDir?: 'asc' | 'desc'; page?: number; limit?: number }): Promise<T[]> {
     const namespaceMap = this.storage.get(namespace)
     if (!namespaceMap) return []

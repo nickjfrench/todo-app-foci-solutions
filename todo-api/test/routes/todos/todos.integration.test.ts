@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from 'vitest'
+import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { build, buildWithStore, InMemoryStore } from '../../helper'
 
 describe('POST /todos', () => {
@@ -95,6 +95,10 @@ describe('GET /todos', () => {
         body: { isCompleted: true },
       })
     }
+  })
+
+  afterEach(async () => {
+    await store.clear()
   })
 
   test('returns all todos', async () => {
