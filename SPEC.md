@@ -1,6 +1,6 @@
 # SPEC for Todo App
 
-**This is outdated, I left in git history to demonstrate my development process. See project README.md for up to date decisions and architecture.**
+**This is outdated. I it left in git history to demonstrate my development process. See project README.md for up to date decisions and architecture.**
 
 I've chosen a RESTful HTTP server over SPA application for the following reasons:
 
