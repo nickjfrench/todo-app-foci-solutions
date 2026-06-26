@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
-import { TodoPluginOptions } from '../../types/plugin-options'
+import type { TodoService } from './todo.service'
+
+export type TodoPluginOptions = { service: TodoService }
 import { parseId } from '../../utils/id'
 import {
   CreateTodoInput,
