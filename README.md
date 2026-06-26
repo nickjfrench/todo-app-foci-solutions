@@ -101,7 +101,7 @@ A Makefile was created for ergonomics. Use the following commands, if `make` is 
 
 ```bash
 # start prod
-make up
+make start
 
 # start dev
 make dev
@@ -168,6 +168,8 @@ I hit several snags that resulted in longer completion time than I wanted.
   - However, if I was repeating this challenge, I would choose FastAPI via Python, as I am much more familiar with that framework for simple APIs.
 - Fastify's plugin autoload for /routes and /plugins caused me some issues with TypeScript when compiling to JavaScript. Routes in sub-folders were getting ignored, so I removed autoload completely, and went with a declarative approach.
 - Fastify's built-in `@fastify/type-provider-zod` was causing me challenges with the latest major version of Zod, so I had to switch to the third party version `fastify-type-provider-zod`.
+- `tsc` gave me some issues with importing `.ts` vs `.js` when building for "production." However, due to time, I had to just use `tsx` on both development and production and delete any build steps.
+  - If I had more time and actual production requirements, I would switch to `esbuild` with `tsc` for typechecking.
 
 ### Next Steps For This Project 
 

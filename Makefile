@@ -1,4 +1,4 @@
-up:
+start:
 	docker compose up --build
 
 dev:
