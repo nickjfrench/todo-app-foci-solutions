@@ -27,6 +27,12 @@ export class TodoService {
   }
 
   async update(id: Id<'todo'>, partial: Partial<Todo>): Promise<Todo> {
+    if (partial.isCompleted === true) {
+      partial.completedOn = new Date().toISOString()
+    } else if (partial.isCompleted === false) {
+      partial.completedOn = null
+    }
+    
     const result = await this.repo.update(id, partial)
     if (!result) throw new Error(`Todo ${id} not found`)
     return result

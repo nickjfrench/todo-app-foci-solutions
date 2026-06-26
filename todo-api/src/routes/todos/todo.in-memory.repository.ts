@@ -59,15 +59,13 @@ export class InMemoryTodoRepository implements ITodoRepository {
     const existing = await this.findById(id)
     if (!existing) return null
 
-    const updated: Todo = { ...existing, ...partial }
+    // Filter out undefined values so they don't overwrite existing fields.
+    // Route handlers coerce null -> undefined, which spread would clobber.
+    const nonUndefined = Object.fromEntries(
+      Object.entries(partial).filter(([, v]) => v !== undefined),
+    ) as Partial<Todo>
 
-    // Business rule: set/clear completedOn based on isCompleted
-    if (partial.isCompleted === true) {
-      updated.completedOn = new Date().toISOString()
-    } else if (partial.isCompleted === false) {
-      updated.completedOn = null
-    }
-
+    const updated: Todo = { ...existing, ...nonUndefined }
     await this.store.set('todos', id, updated)
     return updated
   }
