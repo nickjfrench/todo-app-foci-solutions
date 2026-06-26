@@ -11,6 +11,31 @@ import {
   TodoSchema,
 } from './todo.model'
 import type { TodoFilter } from './todo.repository'
+import { ResourceNotFoundError, InvalidInputError } from '../../errors'
+
+/**
+ * Format a typed error as a structured JSON response.
+ * Returns the reply chain so it can be returned from a handler.
+ */
+function handleError(
+  reply: FastifyReply,
+  err: Error,
+): FastifyReply {
+  if (err instanceof ResourceNotFoundError) {
+    return reply.status(404).send({
+      error: 'Not Found',
+      message: err.message,
+    })
+  }
+  if (err instanceof InvalidInputError) {
+    return reply.status(400).send({
+      error: 'Bad Request',
+      message: err.message,
+    })
+  }
+  // Unknown error — let the global handler deal with it
+  throw err
+}
 
 const routes: FastifyPluginAsync<TodoPluginOptions> = async (fastify, opts) => {
   const service = opts.service
@@ -24,10 +49,18 @@ const routes: FastifyPluginAsync<TodoPluginOptions> = async (fastify, opts) => {
         response: { 201: TodoSchema },
       },
     },
-    async function(request: FastifyRequest<{ Body: z.infer<typeof CreateTodoInput> }>, reply: FastifyReply) {
-      const todo = await service.create(request.body)
-      reply.code(201)
-      return todo
+    async function(
+      request: FastifyRequest<{ Body: z.infer<typeof CreateTodoInput> }>,
+      reply: FastifyReply,
+    ) {
+      try {
+        const todo = await service.create(request.body)
+        reply.code(201)
+        return todo
+      } catch (err) {
+        if (err instanceof Error) return handleError(reply, err)
+        throw err
+      }
     },
   )
 
@@ -40,9 +73,20 @@ const routes: FastifyPluginAsync<TodoPluginOptions> = async (fastify, opts) => {
         response: { 200: TodoSchema.array() },
       },
     },
-    async function(request: FastifyRequest<{ Querystring: z.infer<typeof ListTodosQuery> }>) {
-      const filter: TodoFilter = { ...request.query, completed: request.query.completed ?? undefined }
-      return service.list(filter)
+    async function(
+      request: FastifyRequest<{ Querystring: z.infer<typeof ListTodosQuery> }>,
+      reply: FastifyReply,
+    ) {
+      try {
+        const filter: TodoFilter = {
+          ...request.query,
+          completed: request.query.completed ?? undefined,
+        }
+        return service.list(filter)
+      } catch (err) {
+        if (err instanceof Error) return handleError(reply, err)
+        throw err
+      }
     },
   )
 
@@ -54,16 +98,17 @@ const routes: FastifyPluginAsync<TodoPluginOptions> = async (fastify, opts) => {
         response: { 200: TodoSchema },
       },
     },
-    async function(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    async function(
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply,
+    ) {
       try {
-        const id = parseId('todo', request.params.id as string)
+        const id = parseId('todo', request.params.id)
         const todo = await service.getById(id)
         return todo
       } catch (err) {
-        if (err instanceof Error && err.message.includes('not found')) {
-          return reply.notFound(err.message)
-        }
-        return reply.badRequest((err as Error).message)
+        if (err instanceof Error) return handleError(reply, err)
+        throw err
       }
     },
   )
@@ -77,9 +122,14 @@ const routes: FastifyPluginAsync<TodoPluginOptions> = async (fastify, opts) => {
         response: { 200: TodoSchema },
       },
     },
-    async function(request: FastifyRequest<{ Params: { id: string }; Body: z.infer<typeof UpdateTodoInput> }>, reply: FastifyReply) {
+    async function(
+      request: FastifyRequest<
+        { Params: { id: string }; Body: z.infer<typeof UpdateTodoInput> }
+      >,
+      reply: FastifyReply,
+    ) {
       try {
-        const id = parseId('todo', request.params.id as string)
+        const id = parseId('todo', request.params.id)
         const partial = request.body
         const todo = await service.update(id, {
           title: partial.title ?? undefined,
@@ -89,28 +139,26 @@ const routes: FastifyPluginAsync<TodoPluginOptions> = async (fastify, opts) => {
         })
         return todo
       } catch (err) {
-        if (err instanceof Error && err.message.includes('not found')) {
-          return reply.notFound(err.message)
-        }
-        return reply.badRequest((err as Error).message)
+        if (err instanceof Error) return handleError(reply, err)
+        throw err
       }
     },
   )
 
-  // DELETE /todos/:id — delete a todo
+  // DELETE /todos/:id — delete a todo (204 No Content)
   fastify.delete(
     '/todos/:id',
-    async function(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    async function(
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply,
+    ) {
       try {
-        const id = parseId('todo', request.params.id as string)
+        const id = parseId('todo', request.params.id)
         await service.remove(id)
-        reply.code(204)
-        return null
+        return reply.code(204).send()
       } catch (err) {
-        if (err instanceof Error && err.message.includes('not found')) {
-          return reply.notFound(err.message)
-        }
-        return reply.badRequest((err as Error).message)
+        if (err instanceof Error) return handleError(reply, err)
+        throw err
       }
     },
   )

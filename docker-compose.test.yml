@@ -1,0 +1,8 @@
+services:
+  todo-api:
+    build:
+      context: todo-api
+      target: development
+    environment:
+      - NODE_ENV=test # override from development set in Dockerfile
+    command: npm test

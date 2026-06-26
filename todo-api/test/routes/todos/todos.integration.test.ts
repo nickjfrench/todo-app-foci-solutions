@@ -222,7 +222,7 @@ describe('GET /todos/:id', () => {
     expect(body.title).toBe('Find me')
   })
 
-  test('returns 404 for non-existent id', async () => {
+  test('returns 404 for non-existent id with structured error body', async () => {
     const app = await build()
 
     const res = await app.inject({
@@ -230,9 +230,13 @@ describe('GET /todos/:id', () => {
       url: '/todos/todo-00000000-0000-0000-0000-000000000000',
     })
     expect(res.statusCode).toBe(404)
+    const body = JSON.parse(res.payload)
+    expect(body.error).toBe('Not Found')
+    expect(body.message).toContain('not found')
   })
 
-  test('returns 400 for invalid id format', async () => {
+
+  test('returns 400 for invalid id format with structured error body', async () => {
     const app = await build()
 
     const res = await app.inject({
@@ -240,6 +244,9 @@ describe('GET /todos/:id', () => {
       url: '/todos/not-a-valid-id',
     })
     expect(res.statusCode).toBe(400)
+    const body = JSON.parse(res.payload)
+    expect(body.error).toBe('Bad Request')
+    expect(body.message).toContain('Invalid')
   })
 })
 
@@ -308,7 +315,7 @@ describe('PATCH /todos/:id', () => {
     expect(body.completedOn).toBeNull()
   })
 
-  test('returns 404 for non-existent id', async () => {
+  test('returns 404 for non-existent id with structured error body', async () => {
     const app = await buildWithStore(store)
 
     const res = await app.inject({
@@ -317,9 +324,12 @@ describe('PATCH /todos/:id', () => {
       body: { title: 'nope' },
     })
     expect(res.statusCode).toBe(404)
+    const body = JSON.parse(res.payload)
+    expect(body.error).toBe('Not Found')
+    expect(body.message).toContain('not found')
   })
 
-  test('returns 400 for invalid id format', async () => {
+  test('returns 400 for invalid id format with structured error body', async () => {
     const app = await buildWithStore(store)
 
     const res = await app.inject({
@@ -328,6 +338,9 @@ describe('PATCH /todos/:id', () => {
       body: { title: 'nope' },
     })
     expect(res.statusCode).toBe(400)
+    const body = JSON.parse(res.payload)
+    expect(body.error).toBe('Bad Request')
+    expect(body.message).toContain('Invalid')
   })
 })
 
@@ -355,7 +368,7 @@ describe('DELETE /todos/:id', () => {
     expect(getRes.statusCode).toBe(404)
   })
 
-  test('returns 404 for non-existent id', async () => {
+  test('returns 404 for non-existent id with structured error body', async () => {
     const app = await build()
 
     const res = await app.inject({
@@ -363,9 +376,13 @@ describe('DELETE /todos/:id', () => {
       url: '/todos/todo-00000000-0000-0000-0000-000000000000',
     })
     expect(res.statusCode).toBe(404)
+    const body = JSON.parse(res.payload)
+    expect(body.error).toBe('Not Found')
+    expect(body.message).toContain('not found')
   })
 
-  test('returns 400 for invalid id format', async () => {
+
+  test('returns 400 for invalid id format with structured error body', async () => {
     const app = await build()
 
     const res = await app.inject({
@@ -373,5 +390,8 @@ describe('DELETE /todos/:id', () => {
       url: '/todos/not-valid',
     })
     expect(res.statusCode).toBe(400)
+    const body = JSON.parse(res.payload)
+    expect(body.error).toBe('Bad Request')
+    expect(body.message).toContain('Invalid')
   })
 })

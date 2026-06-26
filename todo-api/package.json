@@ -10,9 +10,9 @@
     "test": "NODE_OPTIONS='--import tsx' vitest run",
     "test:watch": "NODE_OPTIONS='--import tsx' vitest",
     "test:coverage": "NODE_OPTIONS='--import tsx' vitest run --coverage",
-    "start": "node dist/server.js",
+    "start": "tsx src/server.ts",
     "dev": "tsx watch src/server.ts",
-    "build:ts": "tsc"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +23,7 @@
     "fastify": "^5.0.0",
     "fastify-plugin": "^5.0.0",
     "fastify-type-provider-zod": "^7.0.0",
+    "tsx": "^4.0.0",
     "uuid": "^14.0.1",
     "zod": "^4.4.3"
   },
@@ -30,7 +31,6 @@
     "@types/node": "^25.0.3",
     "@vitest/coverage-v8": "^4.0.15",
     "fastify-tsconfig": "^3.0.0",
-    "tsx": "^4.0.0",
     "typescript": "~5.9.2",
     "vitest": "^4.0.15"
   }
