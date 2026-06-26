@@ -2,6 +2,9 @@ import type { Id } from '../../utils/id'
 import type { TodoFilter } from './todo.repository'
 import { ITodoRepository } from './todo.repository'
 import { createTodo, type Todo } from './todo.model'
+import type { z } from 'zod'
+import { CreateTodoInput as CreateTodoInputSchema } from './todo.model'
+type CreateTodoInput = z.infer<typeof CreateTodoInputSchema>
 
 /**
  * Todo service — owns business logic.
@@ -11,8 +14,7 @@ import { createTodo, type Todo } from './todo.model'
  */
 export class TodoService {
   constructor(private repo: ITodoRepository) {}
-
-  async create(input: Todo): Promise<Todo> {
+  async create(input: CreateTodoInput): Promise<Todo> {
     return this.repo.create(createTodo(input))
   }
 
