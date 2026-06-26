@@ -1,4 +1,5 @@
 import { v4 as uuidv4, validate as uuidValidate } from 'uuid';
+import { InvalidInputError } from '../errors'
 
 /**
  * Branded UUID type with a prefix.
@@ -39,11 +40,11 @@ export function generateId<Prefix extends string>(prefix: Prefix): Id<Prefix> {
 export function parseId<Prefix extends string>(prefix: Prefix, value: string): Id<Prefix> {
   const expected = `${prefix}-`;
   if (typeof value !== 'string' || !value.startsWith(expected)) {
-    throw new Error(`Invalid ${prefix} ID: expected "${expected}<uuid>"`);
+    throw new InvalidInputError(`Invalid ${prefix} ID: expected "${expected}<uuid>"`)
   }
   const uuid = value.slice(expected.length);
   if (!uuidValidate(uuid)) {
-    throw new Error(`Invalid ${prefix} ID: UUID portion is not a valid UUID`);
+    throw new InvalidInputError(`Invalid ${prefix} ID: UUID portion is not a valid UUID`)
   }
   return value as Id<Prefix>;
 }
