@@ -1,7 +1,7 @@
 import Fastify from 'fastify'
 import app from './app'
 import { env } from './config/env'
-import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod'
+import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
 
 const server = Fastify({ logger: true })
 

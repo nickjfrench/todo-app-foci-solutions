@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { InMemoryStore } from '../../src/infrastructure/inmemorystore'
+import { InMemoryStore } from '../../src/infrastructure/in-memory-store'
 
 describe('InMemoryStore', () => {
   let store: InMemoryStore

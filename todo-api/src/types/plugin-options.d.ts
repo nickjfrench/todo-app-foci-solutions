@@ -1,4 +1,5 @@
 import { FastifyPluginOptions } from 'fastify'
+import { TodoService } from '../routes/todos/todo.service'
 
 /**
  * Plugin options passed from a module's index.ts to its routes plugin.
@@ -17,5 +18,5 @@ import { FastifyPluginOptions } from 'fastify'
  *   }
  */
 export interface TodoPluginOptions extends FastifyPluginOptions {
-  service: unknown  // will be TodoService when wired in Phase 3
+  service: TodoService
 }

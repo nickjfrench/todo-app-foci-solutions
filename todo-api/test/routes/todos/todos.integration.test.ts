@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest'
-import { build } from '../../helper'
+import { build, buildWithStore, InMemoryStore } from '../../helper'
 
 describe('POST /todos', () => {
   test('creates a todo with title only and returns 201', async () => {
@@ -68,49 +68,39 @@ describe('POST /todos', () => {
 })
 
 describe('GET /todos', () => {
-  let todoId: string
+  const store = new InMemoryStore()
 
   beforeEach(async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
-    const res1 = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/todos',
       body: { title: 'Alpha', dueDate: '2026-01-01T00:00:00.000Z' },
     })
-    const res2 = await app.inject({
+    await app.inject({
       method: 'POST',
       url: '/todos',
       body: { title: 'Beta', dueDate: '2026-02-01T00:00:00.000Z' },
     })
 
-    const todo1 = JSON.parse(res1.payload)
-    const todo2 = JSON.parse(res2.payload)
-    todoId = todo1.id
-
-    // Mark Alpha as complete
-    await app.inject({
-      method: 'PATCH',
-      url: `/todos/${todo1.id}`,
-      body: { isCompleted: true },
-    })
-
-    // Mark Beta as complete
-    await app.inject({
-      method: 'PATCH',
-      url: `/todos/${todo2.id}`,
-      body: { isCompleted: true },
-    })
+    // Mark both as complete so completed=true filter has data
+    const todos = JSON.parse(
+      (await app.inject({ method: 'GET', url: '/todos' })).payload,
+    )
+    for (const todo of todos) {
+      await app.inject({
+        method: 'PATCH',
+        url: `/todos/${todo.id}`,
+        body: { isCompleted: true },
+      })
+    }
   })
 
   test('returns all todos', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
-    const res = await app.inject({
-      method: 'GET',
-      url: '/todos',
-    })
-
+    const res = await app.inject({ method: 'GET', url: '/todos' })
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(Array.isArray(body)).toBe(true)
@@ -118,45 +108,25 @@ describe('GET /todos', () => {
   })
 
   test('returns empty array when no todos exist', async () => {
-    const app = await build()
+    const emptyStore = new InMemoryStore()
+    const app = await buildWithStore(emptyStore)
 
-    // Delete both todos created in beforeEach
-    const res = await app.inject({
-      method: 'GET',
-      url: '/todos',
-    })
-    const todos = JSON.parse(res.payload)
-    for (const todo of todos) {
-      await app.inject({
-        method: 'DELETE',
-        url: `/todos/${todo.id}`,
-      })
-    }
-
-    const res2 = await app.inject({
-      method: 'GET',
-      url: '/todos',
-    })
-
-    expect(res2.statusCode).toBe(200)
-    expect(JSON.parse(res2.payload)).toEqual([])
+    const res = await app.inject({ method: 'GET', url: '/todos' })
+    expect(res.statusCode).toBe(200)
+    expect(JSON.parse(res.payload)).toEqual([])
   })
 
   test('filters by completed=false', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
-    // Create an incomplete todo
-    const createRes = await app.inject({
+    // Create an incomplete todo in the shared store
+    await app.inject({
       method: 'POST',
       url: '/todos',
       body: { title: 'Incomplete task' },
     })
 
-    const res = await app.inject({
-      method: 'GET',
-      url: '/todos?completed=false',
-    })
-
+    const res = await app.inject({ method: 'GET', url: '/todos?completed=false' })
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body).toHaveLength(1)
@@ -164,13 +134,9 @@ describe('GET /todos', () => {
   })
 
   test('filters by completed=true', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
-    const res = await app.inject({
-      method: 'GET',
-      url: '/todos?completed=true',
-    })
-
+    const res = await app.inject({ method: 'GET', url: '/todos?completed=true' })
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body).toHaveLength(2)
@@ -178,27 +144,25 @@ describe('GET /todos', () => {
   })
 
   test('orders by dueDate ascending', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'GET',
       url: '/todos?orderBy=dueDate&orderDir=asc',
     })
-
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
-    expect(body[0].title).toBe('Alpha')  // 2026-01-01 < 2026-02-01
+    expect(body[0].title).toBe('Alpha')
     expect(body[1].title).toBe('Beta')
   })
 
   test('orders by dueDate descending', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'GET',
       url: '/todos?orderBy=dueDate&orderDir=desc',
     })
-
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body[0].title).toBe('Beta')
@@ -206,13 +170,12 @@ describe('GET /todos', () => {
   })
 
   test('orders by title ascending', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'GET',
       url: '/todos?orderBy=title&orderDir=asc',
     })
-
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body[0].title).toBe('Alpha')
@@ -220,26 +183,18 @@ describe('GET /todos', () => {
   })
 
   test('applies pagination', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
-    const res = await app.inject({
-      method: 'GET',
-      url: '/todos?page=1&limit=1',
-    })
-
+    const res = await app.inject({ method: 'GET', url: '/todos?page=1&limit=1' })
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body).toHaveLength(1)
   })
 
   test('returns empty array on page beyond data', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
-    const res = await app.inject({
-      method: 'GET',
-      url: '/todos?page=99&limit=10',
-    })
-
+    const res = await app.inject({ method: 'GET', url: '/todos?page=99&limit=10' })
     expect(res.statusCode).toBe(200)
     expect(JSON.parse(res.payload)).toEqual([])
   })
@@ -256,11 +211,7 @@ describe('GET /todos/:id', () => {
     })
     const todo = JSON.parse(createRes.payload)
 
-    const res = await app.inject({
-      method: 'GET',
-      url: `/todos/${todo.id}`,
-    })
-
+    const res = await app.inject({ method: 'GET', url: `/todos/${todo.id}` })
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body.id).toBe(todo.id)
@@ -274,7 +225,6 @@ describe('GET /todos/:id', () => {
       method: 'GET',
       url: '/todos/todo-00000000-0000-0000-0000-000000000000',
     })
-
     expect(res.statusCode).toBe(404)
   })
 
@@ -285,51 +235,47 @@ describe('GET /todos/:id', () => {
       method: 'GET',
       url: '/todos/not-a-valid-id',
     })
-
     expect(res.statusCode).toBe(400)
   })
 })
 
 describe('PATCH /todos/:id', () => {
+  const store = new InMemoryStore()
   let todoId: string
 
   beforeEach(async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'POST',
       url: '/todos',
       body: { title: 'Original title', dueDate: '2026-06-01T00:00:00.000Z' },
     })
-
     todoId = JSON.parse(res.payload).id
   })
 
   test('updates the title', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'PATCH',
       url: `/todos/${todoId}`,
       body: { title: 'Updated title' },
     })
-
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body.title).toBe('Updated title')
-    // dueDate should be preserved
     expect(body.dueDate).toBe('2026-06-01T00:00:00.000Z')
   })
 
   test('marks todo as complete and sets completedOn', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'PATCH',
       url: `/todos/${todoId}`,
       body: { isCompleted: true },
     })
-
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body.isCompleted).toBe(true)
@@ -337,22 +283,21 @@ describe('PATCH /todos/:id', () => {
   })
 
   test('marks todo as incomplete and clears completedOn', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
-    // First mark it complete
+    // Mark complete first
     await app.inject({
       method: 'PATCH',
       url: `/todos/${todoId}`,
       body: { isCompleted: true },
     })
 
-    // Now mark it incomplete
+    // Now mark incomplete
     const res = await app.inject({
       method: 'PATCH',
       url: `/todos/${todoId}`,
       body: { isCompleted: false },
     })
-
     expect(res.statusCode).toBe(200)
     const body = JSON.parse(res.payload)
     expect(body.isCompleted).toBe(false)
@@ -360,26 +305,24 @@ describe('PATCH /todos/:id', () => {
   })
 
   test('returns 404 for non-existent id', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'PATCH',
       url: '/todos/todo-00000000-0000-0000-0000-000000000000',
       body: { title: 'nope' },
     })
-
     expect(res.statusCode).toBe(404)
   })
 
   test('returns 400 for invalid id format', async () => {
-    const app = await build()
+    const app = await buildWithStore(store)
 
     const res = await app.inject({
       method: 'PATCH',
       url: '/todos/bad-id',
       body: { title: 'nope' },
     })
-
     expect(res.statusCode).toBe(400)
   })
 })
@@ -399,10 +342,8 @@ describe('DELETE /todos/:id', () => {
       method: 'DELETE',
       url: `/todos/${todo.id}`,
     })
-
     expect(res.statusCode).toBe(204)
 
-    // Verify it's gone
     const getRes = await app.inject({
       method: 'GET',
       url: `/todos/${todo.id}`,
@@ -417,7 +358,6 @@ describe('DELETE /todos/:id', () => {
       method: 'DELETE',
       url: '/todos/todo-00000000-0000-0000-0000-000000000000',
     })
-
     expect(res.statusCode).toBe(404)
   })
 
@@ -428,7 +368,6 @@ describe('DELETE /todos/:id', () => {
       method: 'DELETE',
       url: '/todos/not-valid',
     })
-
     expect(res.statusCode).toBe(400)
   })
 })

@@ -1,38 +1,28 @@
-import { join } from 'node:path'
-import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload'
+import sensible from './plugins/sensible.plugin'
+import inMemoryStore from './plugins/in-memory-store.plugin'
+import todosPlugin from './plugins/todos.plugin'
+import health from './routes/health'
+import root from './routes/root'
+import todos from './routes/todos'
 import { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
 
-export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {
-
-}
-// Pass --options via CLI arguments in command to enable these options.
-const options: AppOptions = {
+export interface AppOptions extends FastifyServerOptions {
 }
 
-const app: FastifyPluginAsync<AppOptions> = async (
-  fastify,
-  opts
-): Promise<void> => {
-  // Place here your custom code!
+const options: AppOptions = {}
 
-  // Do not touch the following lines
+const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void> => {
+  // Support plugins
+  fastify.register(sensible)
+  fastify.register(inMemoryStore)
 
-  // This loads all plugins defined in plugins
-  // those should be support plugins that are reused
-  // through your application
-  // eslint-disable-next-line no-void
-  void fastify.register(AutoLoad, {
-    dir: join(__dirname, 'plugins'),
-    options: opts
-  })
+  // Domain plugins
+  fastify.register(todosPlugin)
 
-  // This loads all plugins defined in routes
-  // define your routes in one of these
-  // eslint-disable-next-line no-void
-  void fastify.register(AutoLoad, {
-    dir: join(__dirname, 'routes'),
-    options: opts
-  })
+  // Routes
+  fastify.register(health)
+  fastify.register(root)
+  fastify.register(todos)
 }
 
 export default app
