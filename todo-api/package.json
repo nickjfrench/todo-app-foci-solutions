@@ -2,7 +2,7 @@
   "name": "todo-api",
   "version": "1.0.0",
   "description": "Todo API built with Fastify.",
-  "main": "src/server.ts",
+  "type": "module",
   "directories": {
     "test": "test"
   },

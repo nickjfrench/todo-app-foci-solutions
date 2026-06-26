@@ -1,6 +1,6 @@
 export enum PERSISTENCE_METHOD {
   INMEMORY = "in_memory",
-  SQLITE = "sqlite",
+  // SQLITE = "sqlite", // Add this when SQLite is implemented
 }
 
 export interface InMemoryStore {

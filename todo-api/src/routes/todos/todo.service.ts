@@ -12,7 +12,7 @@ import { createTodo, type Todo } from './todo.model'
 export class TodoService {
   constructor(private repo: ITodoRepository) {}
 
-  async create(input: { title: string; description?: string | null; dueDate?: string | null }): Promise<Todo> {
+  async create(input: Todo): Promise<Todo> {
     return this.repo.create(createTodo(input))
   }
 
@@ -32,7 +32,6 @@ export class TodoService {
     } else if (partial.isCompleted === false) {
       partial.completedOn = null
     }
-    
     const result = await this.repo.update(id, partial)
     if (!result) throw new Error(`Todo ${id} not found`)
     return result
