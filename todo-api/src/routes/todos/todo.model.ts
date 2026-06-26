@@ -70,7 +70,7 @@ export type ListTodosQuery = z.infer<typeof ListTodosQuery>
  * @param input - User input validated by `CreateTodoInput`.
  * @returns A complete Todo entity.
  */
-export function createTodo(input: { title: string; description?: string | null; dueDate?: string | null }): Todo {
+export function createTodo(input: z.infer<typeof CreateTodoInput>): Todo {
   return {
     id: generateId('todo'),
     title: input.title,
